@@ -1,0 +1,23 @@
+meta {
+  name: AJOUT
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/api/fournisseurs/create_fournisseur
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "NomF": "FournisseurTest",
+    "TelF": "0123456789",
+    "AdrF": "Adresse test"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

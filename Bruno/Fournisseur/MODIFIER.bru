@@ -1,0 +1,23 @@
+meta {
+  name: MODIFIER
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://localhost:8080/api/fournisseurs/21/modifier
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "NomF": "Fournisseur modifié",
+    "TelF": "0987654321",
+    "AdrF": "Nouvelle adresse"
+  } 
+}
+
+settings {
+  encodeUrl: true
+}
