@@ -5,17 +5,19 @@ meta {
 }
 
 patch {
-  url: http://localhost:8080/api/fournisseurs/21/modifier
+  url: http://localhost:8000/api/fournisseurs/20/modifier
   body: json
   auth: inherit
 }
 
 body:json {
   {
-    "NomF": "Fournisseur modifié",
-    "TelF": "0987654321",
-    "AdrF": "Nouvelle adresse"
-  } 
+    "nom_f": "Nouveau Nom",
+    "tel_f": "0123456789",
+    "adr_f": "cosa",
+    "datecreation_f": "2025-09-18T17:00:00+00:00",
+    "mail_f": "nouveau@mail.com"
+  }
 }
 
 settings {

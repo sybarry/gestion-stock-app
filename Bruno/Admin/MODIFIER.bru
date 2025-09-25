@@ -1,0 +1,26 @@
+meta {
+  name: MODIFIER
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://localhost:8000/api/admins/1/modifier
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "nom_a": "Martin",
+    "prenom_a": "Pierre",
+    "tel_a": "0987654321",
+    "adr_a": "456 avenue des Champs",
+    "mail_a": "pierre.martin@example.com",
+    "datecreation_a": "2025-09-20T14:00:00+00:00"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

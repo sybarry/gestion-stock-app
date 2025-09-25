@@ -6,7 +6,7 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use App\Entity\PRODUIT;
-use App\Entity\FOURNISSEUR;
+use App\Entity\Fournisseur;
 use Faker\Factory as FakerFactory;
 
 class ProduitFixtures extends Fixture implements DependentFixtureInterface
@@ -17,7 +17,7 @@ class ProduitFixtures extends Fixture implements DependentFixtureInterface
         // On suppose que les fournisseurs sont déjà chargés
         $fournisseurs = [];
             for ($i = 1; $i <= 20; $i++) {
-                $fournisseurs[] = $this->getReference('fournisseur_' . $i, FOURNISSEUR::class);
+                $fournisseurs[] = $this->getReference('fournisseur_' . $i, Fournisseur::class);
             }
             for ($i = 1; $i <= 20; $i++) {
                 $nomP = 'Produit ' . $i;

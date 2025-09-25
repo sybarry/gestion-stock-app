@@ -1,0 +1,15 @@
+meta {
+  name: ID
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:8000/api/commandes/1/commande
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

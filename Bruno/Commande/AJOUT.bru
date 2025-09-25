@@ -1,0 +1,25 @@
+meta {
+  name: AJOUT
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8000/api/commandes/create_commande
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "num_com": "COM-TEST-2025",
+    "qte_c": 5,
+    "client": "/api/clients/1/client",
+    "produit": "/api/produits/1/produit",
+    "date_commande": "2025-09-20T10:00:00+00:00"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

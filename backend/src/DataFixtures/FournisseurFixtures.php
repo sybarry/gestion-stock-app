@@ -4,7 +4,7 @@ namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use App\Entity\FOURNISSEUR;
+use App\Entity\Fournisseur;
 use Faker\Factory as FakerFactory;
 
 class FournisseurFixtures extends Fixture
@@ -13,12 +13,20 @@ class FournisseurFixtures extends Fixture
     {
         $faker = FakerFactory::create('fr_FR');
         for ($i = 1; $i <= 20; $i++) {
-            $f = new FOURNISSEUR();
-            $f->setNomF(substr($faker->company, 0, 20));
-            $f->setTelF(substr($faker->phoneNumber, 0, 20));
-            $f->setAdrF(substr($faker->city, 0, 20));
+            $user = new \App\Entity\User();
+            $user->setNomUser('fournisseur' . $i . '@email.com');
+            $user->setPassword($faker->password);
+            $user->setRole('fournisseur');
+            $manager->persist($user);
+
+            $f = new Fournisseur();
+            $f->setNomF('Fournisseur' . $i);
+            $f->setTelF('07000000' . str_pad($i, 2, '0', STR_PAD_LEFT));
+            $f->setAdrF('Ville' . $i . ', France');
+            $f->setMailF('fournisseur' . $i . '@email.com');
+            $f->setDatecreationF(new \DateTime());
+            $f->setUser($user);
             $manager->persist($f);
-            // La référence utilisera l'index entier
             $this->addReference('fournisseur_' . $i, $f);
         }
         $manager->flush();

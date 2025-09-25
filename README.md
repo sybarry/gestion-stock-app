@@ -9,7 +9,7 @@ docker-compose up --build
 ## Accès aux services dans le navigateur
 
 - **Frontend (React/Vite)** : [http://localhost:3000](http://localhost:3000)
-- **Backend (Symfony/PHP)** : [http://localhost:8080](http://localhost:8080)
+- **Backend (Symfony/PHP)** : [http://localhost:8080](http://localhost:8000)
 - **phpMyAdmin** : [http://localhost:8081](http://localhost:8081)
 
 ## Accès base de données

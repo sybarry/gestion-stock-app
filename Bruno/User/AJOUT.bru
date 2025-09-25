@@ -1,0 +1,29 @@
+meta {
+  name: AJOUT
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8000/api/users/create_user
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "nom_user": "saikouz",
+    "password": "123",
+    "role": "client",
+    "nom_c": "Barry",
+    "prenom_c": "yaya",
+    "tel_c": "0123456789",
+    "adr_c": "123 rue de la Paix",
+    "mail_c": "john.doe@email.com",
+    "datecreation_c": "2025-09-21T10:00:00+00:00"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

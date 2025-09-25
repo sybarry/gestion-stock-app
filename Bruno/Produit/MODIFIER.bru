@@ -1,0 +1,24 @@
+meta {
+  name: MODIFIER
+  type: http
+  seq: 3
+}
+
+patch {
+  url: http://localhost:8000/api/produits/20/modifier
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "nom_p": "Produitmodifier",
+    "qte_p": 10,
+    "prix": 20,
+    "fournisseur": "/api/fournisseurs/20/fournisseur"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

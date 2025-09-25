@@ -1,0 +1,23 @@
+meta {
+  name: MODIFIER
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://localhost:8000/api/users/25/modifier
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "nom_user": "john_doe_modified",
+    "password": "nouveaumotdepasse456",
+    "role": "user"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

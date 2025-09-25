@@ -1,0 +1,15 @@
+meta {
+  name: DELETE
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://localhost:8000/api/commandes/21/supprimer
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,24 @@
+meta {
+  name: MODIFIER
+  type: http
+  seq: 3
+}
+
+patch {
+  url: http://localhost:8000/api/commandes/20/modifier
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "num_com": "COM-MODIFIE-12345",
+    "qte_c": 8,
+    "client": "/api/clients/1",
+    "produit": "/api/produits/5"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

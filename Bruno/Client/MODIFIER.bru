@@ -1,0 +1,26 @@
+meta {
+  name: MODIFIER
+  type: http
+  seq: 3
+}
+
+patch {
+  url: http://localhost:8000/api/clients/25/modifier
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "nom_c": "NouveauNom",
+      "prenom_c": "NouveauPrenom",
+      "tel_c": "0600000000",
+      "adr_c": "cite",
+      "datecreation_c": "2025-09-18T17:00:00+00:00",
+      "mail_c": "nouveau@mail.com"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
