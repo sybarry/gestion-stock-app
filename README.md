@@ -8,7 +8,149 @@
 - [🏗️ Architecture](#architecture)
 - [⚙️ Technologies utilisées](#technologies-utilisées)
 - [📁 Structure du projet](#structure-du-projet)
-- [🚀 Installation et démarrage](#installation-et-démarrage)
+- [🚀 Installation et démarrage](#installation-et-démarra---
+
+## 🐳 Gestion des conteneurs Docker
+
+### ▶️ **Démarrer l'application :**
+
+```bash
+# Démarrer tous les services en arrière-plan
+docker-compose up -d
+
+# Démarrer avec construction des images (première fois ou après modifications)
+docker-compose up --build -d
+
+# Démarrer avec logs visibles (pour debug)
+docker-compose up
+```
+
+### ⏹️ **Arrêter l'application :**
+
+```bash
+# Arrêter tous les conteneurs (garde les données)
+docker-compose stop
+
+# Arrêter et supprimer les conteneurs (garde les volumes/données)
+docker-compose down
+
+# Arrêt complet avec suppression des volumes (⚠️ perte de données)
+docker-compose down --volumes
+```
+
+### 🔄 **Redémarrer l'application :**
+
+```bash
+# Redémarrer tous les services
+docker-compose restart
+
+# Redémarrer un service spécifique
+docker-compose restart backend
+docker-compose restart db
+docker-compose restart frontend
+
+# Arrêter puis redémarrer complètement
+docker-compose down && docker-compose up -d
+```
+
+### 📊 **Vérifier l'état des conteneurs :**
+
+```bash
+# Voir l'état de tous les services
+docker-compose ps
+
+# Voir les conteneurs en cours d'exécution
+docker ps
+
+# Voir tous les conteneurs (actifs et arrêtés)
+docker ps -a
+```
+
+---
+
+## 🛠️ Dépannage Docker
+
+### ❌ **Problèmes courants :**
+
+#### **Port déjà utilisé**
+```bash
+# Erreur: "port 3307 already in use"
+# Solution 1: Arrêter les conteneurs existants
+docker-compose down
+
+# Solution 2: Trouver et arrêter le processus utilisant le port
+sudo lsof -i :3307
+sudo kill -9 [PID]
+```
+
+#### **Conteneurs corrompus**
+```bash
+# Nettoyage complet
+docker-compose down --volumes --remove-orphans
+docker system prune -f
+docker-compose up --build -d
+```
+
+#### **Base de données non initialisée**
+```bash
+# Vérifier que MySQL est prêt
+docker-compose logs db
+
+# Recreer le schéma si nécessaire
+docker-compose exec backend php bin/console doctrine:schema:update --force
+docker-compose exec backend php bin/console doctrine:fixtures:load --no-interaction
+```
+
+#### **Images obsolètes**
+```bash
+# Forcer la reconstruction sans cache
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+#### **Permissions Docker (Linux)**
+```bash
+# Si erreur "permission denied"
+sudo systemctl restart docker
+
+# Ajouter votre utilisateur au groupe docker (puis redémarrer)
+sudo usermod -aG docker $USER
+```
+
+### 🐛 **Debug et logs :**
+```bash
+# Voir tous les logs en temps réel
+docker-compose logs -f
+
+# Logs d'un service spécifique
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f db
+docker-compose logs -f phpmyadmin
+
+# Entrer dans un conteneur pour debug
+docker-compose exec backend bash
+docker-compose exec frontend sh
+docker-compose exec db mysql -u sabarry -psaikou1993 gestion_stock
+
+# Voir l'utilisation des ressources
+docker stats
+```
+
+### 💾 **Gestion des données :**
+```bash
+# Sauvegarder la base de données
+docker-compose exec db mysqldump -u sabarry -psaikou1993 gestion_stock > backup.sql
+
+# Restaurer la base de données
+docker-compose exec -T db mysql -u sabarry -psaikou1993 gestion_stock < backup.sql
+
+# Voir les volumes Docker
+docker volume ls
+
+# Nettoyer les volumes non utilisés
+docker volume prune
+```
 - [🔧 Configuration](#configuration)
 - [📊 Base de données](#base-de-données)
 - [🔌 API Endpoints](#api-endpoints)
@@ -428,57 +570,12 @@ Pour contribuer au projet :
 
 ## � Dépannage Docker
 
-### ❌ **Problèmes courants :**
-
-#### **Port déjà utilisé**
-```bash
-# Erreur: "port 3306 already in use"
-# Solution: Le port est changé vers 3307 dans le docker-compose.yml
-```
-
-#### **Conteneurs corrompus**
-```bash
-# Nettoyage complet
-docker-compose down --volumes --remove-orphans
-docker system prune -f
-docker-compose up --build -d
-```
-
-#### **Base de données non initialisée**
-```bash
-# Vérifier que MySQL est prêt
-docker-compose logs db
-
-# Redémarrer uniquement la DB
-docker-compose restart db
-```
-
-#### **Images obsolètes**
-```bash
-# Forcer la reconstruction
-docker-compose build --no-cache
-docker-compose up -d
-```
-
-### 🐛 **Debug et logs :**
-```bash
-# Voir tous les logs
-docker-compose logs -f
-
-# Logs d'un service spécifique
-docker-compose logs -f backend
-docker-compose logs -f db
-
-# Entrer dans un conteneur
-docker-compose exec backend bash
-docker-compose exec db mysql -u user -ppassword gestion_stock
-```
-
 ---
-Frontend (React) : http://localhost:3000
-Backend (Symfony API) : http://localhost:8000
-PhpMyAdmin : http://localhost:8081
-Base de données MySQL : localhost:3307
+**Accès aux services :**
+- 🌐 **Frontend (React)** : http://localhost:3000
+- 🔧 **Backend (Symfony API)** : http://localhost:8000
+- 📊 **PhpMyAdmin** : http://localhost:8081
+- 🗄️ **Base de données MySQL** : localhost:3307
 
 ---
 
