@@ -104,20 +104,59 @@ gestion-stock-app/
 
 ## 🚀 Installation et démarrage
 
-### Option 1 : Avec Docker (Recommandé)
+### 🐳 Option 1 : Avec Docker (Recommandé)
 
+#### **Prérequis :**
+- Docker et Docker Compose installés sur votre système
+
+#### **Lancement rapide :**
 ```bash
 # Cloner le repository
 git clone https://github.com/sybarry/gestion-stock-app.git
 cd gestion-stock-app
 
-# Lancer tous les services
-docker-compose up --build
+# Construire et lancer en arrière-plan
+docker-compose up --build -d
 
-# Attendre que tous les services soient prêts (2-3 minutes)
+# Voir le statut des services
+docker-compose ps
 ```
 
-### Option 2 : Installation manuelle
+#### **Première fois (avec logs) :**
+```bash
+# Pour voir les logs en temps réel (première installation)
+docker-compose up --build
+
+# Une fois que tout est prêt, arrêter avec Ctrl+C puis relancer en arrière-plan
+docker-compose up -d
+```
+
+#### **Commandes utiles :**
+```bash
+# Voir les logs en temps réel
+docker-compose logs -f
+
+# Voir les logs d'un service spécifique
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f db
+
+# Arrêter tous les services
+docker-compose down
+
+# Redémarrer tous les services
+docker-compose restart
+
+# Nettoyage complet (supprime tout)
+docker-compose down --volumes --remove-orphans
+docker system prune -f
+```
+
+#### **Temps d'installation :**
+- **Première fois :** 3-5 minutes (construction des images)
+- **Démarrages suivants :** 30-60 secondes
+
+### 🔧 Option 2 : Installation manuelle
 
 #### Backend
 ```bash
@@ -160,11 +199,27 @@ npm run dev
 ## 📊 Base de données
 
 ### 🗃️ Configuration MySQL
-- **Host :** `localhost` (ou `db` dans Docker)
+
+#### **Avec Docker :**
+- **Host :** `localhost` (depuis l'extérieur) ou `db` (entre conteneurs)
+- **Port :** `3307` (mappé depuis le port 3306 du conteneur)
+- **Base :** `gestion_stock`
+- **Utilisateur :** `user`
+- **Mot de passe :** `password`
+- **Root password :** `root`
+
+#### **Installation manuelle :**
+- **Host :** `localhost`
 - **Port :** `3306`
 - **Base :** `gestion_stock`
 - **Utilisateur :** `user`
 - **Mot de passe :** `password`
+
+#### **Accès phpMyAdmin (Docker uniquement) :**
+- **URL :** http://localhost:8081
+- **Serveur :** `db`
+- **Utilisateur :** `user` ou `root`
+- **Mot de passe :** `password` ou `root`
 
 ### 📋 Tables principales
 
@@ -371,27 +426,60 @@ Pour contribuer au projet :
 
 ---
 
-## 📄 Licence
+## � Dépannage Docker
 
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+### ❌ **Problèmes courants :**
+
+#### **Port déjà utilisé**
+```bash
+# Erreur: "port 3306 already in use"
+# Solution: Le port est changé vers 3307 dans le docker-compose.yml
+```
+
+#### **Conteneurs corrompus**
+```bash
+# Nettoyage complet
+docker-compose down --volumes --remove-orphans
+docker system prune -f
+docker-compose up --build -d
+```
+
+#### **Base de données non initialisée**
+```bash
+# Vérifier que MySQL est prêt
+docker-compose logs db
+
+# Redémarrer uniquement la DB
+docker-compose restart db
+```
+
+#### **Images obsolètes**
+```bash
+# Forcer la reconstruction
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### 🐛 **Debug et logs :**
+```bash
+# Voir tous les logs
+docker-compose logs -f
+
+# Logs d'un service spécifique
+docker-compose logs -f backend
+docker-compose logs -f db
+
+# Entrer dans un conteneur
+docker-compose exec backend bash
+docker-compose exec db mysql -u user -ppassword gestion_stock
+```
+
+---
+Frontend (React) : http://localhost:3000
+Backend (Symfony API) : http://localhost:8000
+PhpMyAdmin : http://localhost:8081
+Base de données MySQL : localhost:3307
 
 ---
 
-## 📞 Support
-
-Pour toute question ou problème :
-- 🐛 **Issues** : [GitHub Issues](https://github.com/sybarry/gestion-stock-app/issues)
-- 📧 **Email** : contact@votredomaine.com
-
----
-
-## 🙏 Remerciements
-
-- **Symfony** & **API Platform** pour l'excellence du framework backend
-- **React** & **Vite** pour les outils frontend modernes  
-- **Docker** pour la containerisation simplifiée
-- **Bruno** pour les tests d'API intuitifs
-
----
-
-*Développé avec ❤️ par l'équipe de développement*
+*Développé avec ❤️ par SAIKOUZ TECH*

@@ -1,46 +1,51 @@
 version: '3.8'
+
 services:
-  backend:
-    build: ./backend
-    container_name: backend
-    ports:
-      - "8080:80"
-    volumes:
-      - ./backend:/var/www/html
-    depends_on:
-      - db
-    environment:
-      - APACHE_DOCUMENT_ROOT=/var/www/html/public
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+  # Base de données
   db:
     image: mysql:8.0
-    container_name: db
-    restart: always
+    container_name: gestion_stock_db
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: saikou1993
       MYSQL_DATABASE: gestion_stock
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_USER: sabarry
+      MYSQL_PASSWORD: saikou1993
     ports:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+
+  # Backend Symfony
+  backend:
+    build: ./backend
+    container_name: gestion_stock_backend
+    ports:
+      - "8000:80"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=mysql://sabarry:saikou1993@db:3306/gestion_stock
+
+  # Frontend React
+  frontend:
+    build: ./frontend
+    container_name: gestion_stock_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  # phpMyAdmin
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
-    restart: always
+    container_name: gestion_stock_phpmyadmin
     ports:
       - "8081:80"
     environment:
       PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: saikou1993
     depends_on:
       - db
+
 volumes:
   db_data:
