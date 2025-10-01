@@ -31,6 +31,13 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
             deserialize: false,
             validate: false,
         ),
+        new Post(
+            uriTemplate: '/admins/ajouter',
+            name: 'api_post_admin',
+            processor: AdminProcessor::class,
+            deserialize: true,
+            validate: true,
+        ),
         new Patch(
             uriTemplate: '/admins/{id}/modifier',
             name: 'api_patch_admin',

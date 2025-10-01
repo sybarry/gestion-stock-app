@@ -11,6 +11,8 @@ import ClientList from './components/clients/ClientList';
 import ClientForm from './components/clients/ClientForm';
 import FournisseurList from './components/fournisseurs/FournisseurList';
 import FournisseurForm from './components/fournisseurs/FournisseurForm';
+import AdminList from './components/admins/AdminList';
+import AdminForm from './components/admins/AdminForm';
 import FactureClient from './components/factures/FactureClient';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './App.css';
@@ -134,6 +136,30 @@ const AppRouter: React.FC = () => {
         element={
           <ProtectedRoute>
             <FournisseurForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admins"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admins/nouveau"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admins/:id/modifier"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminForm />
           </ProtectedRoute>
         }
       />

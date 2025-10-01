@@ -3,6 +3,7 @@ namespace App\State\Processor;
 
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Admin;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 
 class AdminProcessor implements ProcessorInterface
@@ -16,7 +17,7 @@ class AdminProcessor implements ProcessorInterface
                 return $this->supprimeAdmin($data, $uriVariables, $context);
             case 'api_patch_admin':
                 return $this->modifieAdmin($data, $uriVariables, $context);
-            case 'api_create_admin':
+            case 'api_post_admin':
                 return $this->ajouteAdmin($data, $uriVariables, $context);
             default:
                 throw new \RuntimeException('Opération non supportée : ' . $name);
@@ -65,6 +66,54 @@ class AdminProcessor implements ProcessorInterface
 
     private function ajouteAdmin($data, array $uriVariables, array $context) {
         try {
+            // Récupérer les données brutes depuis différentes sources
+            $request = $context['request'] ?? null;
+            $requestData = [];
+            
+            // Essayer de récupérer depuis la requête
+            if ($request) {
+                $content = $request->getContent();
+                $requestData = json_decode($content, true) ?? [];
+            }
+            
+            // Essayer de récupérer depuis le contexte input
+            if (empty($requestData['password']) && isset($context['input'])) {
+                $input = $context['input'];
+                if (is_array($input)) {
+                    $requestData = array_merge($requestData, $input);
+                }
+            }
+            
+            // Essayer de récupérer depuis les données désérialisées
+            if (empty($requestData['password']) && isset($context['data'])) {
+                $contextData = $context['data'];
+                if (is_array($contextData)) {
+                    $requestData = array_merge($requestData, $contextData);
+                }
+            }
+            
+            // Créer d'abord un User associé
+            $user = new User();
+            
+            // Utiliser le nom d'utilisateur fourni ou générer un par défaut
+            $nomUser = $requestData['nom_user'] ?? ($data->getNomA() . ' ' . $data->getPrenomA());
+            $user->setNomUser($nomUser);
+            
+            // Utiliser le mot de passe fourni ou un par défaut
+            $password = $requestData['password'] ?? 'admin123';
+            
+            // Stocker le mot de passe en clair comme pour les clients
+            $user->setPassword($password);
+            $user->setRole('admin'); // Rôle admin
+            
+            // Persister le User d'abord
+            $this->em->persist($user);
+            $this->em->flush(); // Flush pour obtenir l'ID du User
+            
+            // Associer le User à l'Admin
+            $data->setUser($user);
+            
+            // Persister l'Admin
             $this->em->persist($data);
             $this->em->flush();
         } catch (\Exception $e) {

@@ -123,11 +123,11 @@ const Dashboard: React.FC = () => {
             <p>Générez et gérez vos factures, suivez les paiements clients</p>
           </Link>
           {user?.role === 'admin' && (
-            <div className="feature-card admin-only">
+            <Link to="/admins" className="feature-card clickable admin-only">
               <div className="feature-icon">⚙️</div>
-              <h3>Admin</h3>
-              <p>Gérez les utilisateurs, les permissions et les paramètres système</p>
-            </div>
+              <h3>Administrateurs</h3>
+              <p>Gérez les administrateurs, les permissions et les paramètres système</p>
+            </Link>
           )}
         </div>
       </main>
