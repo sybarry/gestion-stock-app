@@ -2,13 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import produitService from '../../services/produitService';
 import type { Produit } from '../../services/produitService';
+import PasswordConfirmModal from '../common/PasswordConfirmModal';
+import { printList } from '../../utils/printUtils';
+import '../../styles/print-buttons.css';
 import './ProduitList.css';
 
 const ProduitList: React.FC = () => {
   const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [modalData, setModalData] = useState<{
+    isOpen: boolean;
+    action: 'delete' | 'modify';
+    produitId: number | null;
+    produitName: string;
+  }>({
+    isOpen: false,
+    action: 'delete',
+    produitId: null,
+    produitName: ''
+  });
 
   // Charger les produits au montage du composant
   useEffect(() => {
@@ -29,23 +42,69 @@ const ProduitList: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteClick = (produit: Produit) => {
+    setModalData({
+      isOpen: true,
+      action: 'delete',
+      produitId: produit.id ?? null,
+      produitName: produit.nom_p
+    });
+  };
+
+  const handleModifyClick = (produit: Produit) => {
+    setModalData({
+      isOpen: true,
+      action: 'modify',
+      produitId: produit.id ?? null,
+      produitName: produit.nom_p
+    });
+  };
+
+  const handleModalClose = () => {
+    setModalData({
+      isOpen: false,
+      action: 'delete',
+      produitId: null,
+      produitName: ''
+    });
+  };
+
+  const handleModalConfirm = async () => {
+    if (!modalData.produitId) return;
+
     try {
-      await produitService.deleteProduit(id);
-      setProduits(produits.filter(p => p.id !== id));
-      setDeleteConfirm(null);
-      setError('');
+      if (modalData.action === 'delete') {
+        await produitService.deleteProduit(modalData.produitId);
+        setProduits(produits.filter(p => p.id !== modalData.produitId));
+        setError('');
+      } else if (modalData.action === 'modify') {
+        // Rediriger vers la page de modification
+        window.location.href = `/produits/${modalData.produitId}/modifier`;
+      }
     } catch (error) {
-      setError('Erreur lors de la suppression du produit');
+      setError(`Erreur lors de la ${modalData.action === 'delete' ? 'suppression' : 'modification'} du produit`);
       console.error(error);
     }
   };
 
-  const formatPrice = (price: number) => {
+    const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
-    }).format(price);
+    }).format(price); // Affichage direct sans conversion
+  };
+
+  const handlePrintList = () => {
+    const columns = [
+      { key: 'id', label: 'ID' },
+      { key: 'nom_p', label: 'Nom' },
+      { key: 'fournisseur.nom_f', label: 'Fournisseur' },
+      { key: 'qte_p', label: 'Quantité' },
+      { key: 'prix', label: 'Prix unitaire', format: (price: number) => formatPrice(price) },
+      { key: 'total', label: 'Total', format: (total: number) => formatPrice(total || 0) }
+    ];
+    
+    printList('Liste des Produits', produits, columns);
   };
 
   if (loading) {
@@ -65,10 +124,15 @@ const ProduitList: React.FC = () => {
           </Link>
           <h1>Gestion des Produits</h1>
         </div>
-        <Link to="/produits/nouveau" className="btn btn-primary">
-          <span className="icon">+</span>
-          Nouveau Produit
-        </Link>
+        <div className="header-actions">
+          <button onClick={handlePrintList} className="btn btn-print">
+            🖨️ Imprimer la liste
+          </button>
+          <Link to="/produits/nouveau" className="btn btn-primary">
+            <span className="icon">+</span>
+            Nouveau Produit
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -119,15 +183,15 @@ const ProduitList: React.FC = () => {
                   <td className="price">{formatPrice(produit.prix)}</td>
                   <td className="total">{formatPrice(produit.total || 0)}</td>
                   <td className="actions">
-                    <Link 
-                      to={`/produits/${produit.id}/modifier`}
+                    <button
+                      onClick={() => handleModifyClick(produit)}
                       className="btn btn-sm btn-secondary"
                       title="Modifier"
                     >
                       ✏️
-                    </Link>
+                    </button>
                     <button
-                      onClick={() => setDeleteConfirm(produit.id!)}
+                      onClick={() => handleDeleteClick(produit)}
                       className="btn btn-sm btn-danger"
                       title="Supprimer"
                     >
@@ -141,31 +205,15 @@ const ProduitList: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal de confirmation de suppression */}
-      {deleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Confirmer la suppression</h3>
-            <p>
-              Êtes-vous sûr de vouloir supprimer le produit "{produits.find(p => p.id === deleteConfirm)?.nom_p}" ?
-            </p>
-            <div className="modal-actions">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="btn btn-secondary"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                className="btn btn-danger"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de confirmation avec mot de passe */}
+      <PasswordConfirmModal
+        isOpen={modalData.isOpen}
+        onClose={handleModalClose}
+        onConfirm={handleModalConfirm}
+        title={modalData.action === 'delete' ? 'Confirmer la suppression' : 'Confirmer la modification'}
+        message={`Êtes-vous sûr de vouloir ${modalData.action === 'delete' ? 'supprimer' : 'modifier'} le produit "${modalData.produitName}" ?`}
+        actionType={modalData.action}
+      />
     </div>
   );
 };

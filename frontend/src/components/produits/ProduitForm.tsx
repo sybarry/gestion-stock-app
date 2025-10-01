@@ -139,11 +139,11 @@ const ProduitForm: React.FC = () => {
     navigate('/produits');
   };
 
-  const formatPrice = (price: number) => {
+    const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
-    }).format(price);
+    }).format(price); // Affichage direct sans conversion
   };
 
   const total = formData.qte_p * formData.prix;

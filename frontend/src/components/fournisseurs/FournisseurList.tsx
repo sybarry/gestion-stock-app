@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fournisseurService } from '../../services/fournisseurService';
 import type { Fournisseur } from '../../services/fournisseurService';
+import PasswordConfirmModal from '../common/PasswordConfirmModal';
+import { printList } from '../../utils/printUtils';
+import '../../styles/print-buttons.css';
 import './FournisseurList.css';
 
 const FournisseurList: React.FC = () => {
+  const navigate = useNavigate();
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [modalAction, setModalAction] = useState<'delete' | 'modify'>('delete');
+  const [selectedFournisseur, setSelectedFournisseur] = useState<Fournisseur | null>(null);
 
   // Charger les fournisseurs au montage du composant
   useEffect(() => {
@@ -33,7 +39,6 @@ const FournisseurList: React.FC = () => {
     try {
       await fournisseurService.delete(id);
       setFournisseurs(fournisseurs.filter(f => f.num_f !== id));
-      setDeleteConfirm(null);
       setError('');
     } catch (error) {
       setError('Erreur lors de la suppression du fournisseur');
@@ -41,9 +46,51 @@ const FournisseurList: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (fournisseur: Fournisseur) => {
+    setSelectedFournisseur(fournisseur);
+    setModalAction('delete');
+    setShowPasswordModal(true);
+  };
+
+  const handleModifyClick = (fournisseur: Fournisseur) => {
+    setSelectedFournisseur(fournisseur);
+    setModalAction('modify');
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordConfirm = () => {
+    if (selectedFournisseur) {
+      if (modalAction === 'delete') {
+        handleDelete(selectedFournisseur.num_f!);
+      } else if (modalAction === 'modify') {
+        navigate(`/fournisseurs/${selectedFournisseur.num_f}/modifier`);
+      }
+    }
+    setShowPasswordModal(false);
+    setSelectedFournisseur(null);
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false);
+    setSelectedFournisseur(null);
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Intl.DateTimeFormat('fr-FR').format(new Date(dateString));
+  };
+
+  const handlePrintList = () => {
+    const columns = [
+      { key: 'num_f', label: 'ID' },
+      { key: 'nom_f', label: 'Nom' },
+      { key: 'tel_f', label: 'Téléphone' },
+      { key: 'mail_f', label: 'Email' },
+      { key: 'adr_f', label: 'Adresse' },
+      { key: 'datecreation_f', label: 'Date création', format: (date: string) => formatDate(date) }
+    ];
+    
+    printList('Liste des Fournisseurs', fournisseurs, columns);
   };
 
   if (loading) {
@@ -63,10 +110,15 @@ const FournisseurList: React.FC = () => {
           </Link>
           <h1>Gestion des Fournisseurs</h1>
         </div>
-        <Link to="/fournisseurs/nouveau" className="btn btn-primary">
-          <span className="icon">+</span>
-          Nouveau Fournisseur
-        </Link>
+        <div className="header-actions">
+          <button onClick={handlePrintList} className="btn btn-print">
+            🖨️ Imprimer la liste
+          </button>
+          <Link to="/fournisseurs/nouveau" className="btn btn-primary">
+            <span className="icon">+</span>
+            Nouveau Fournisseur
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -117,15 +169,15 @@ const FournisseurList: React.FC = () => {
                   <td className="address">{fournisseur.adr_f}</td>
                   <td className="date">{formatDate(fournisseur.datecreation_f)}</td>
                   <td className="actions">
-                    <Link 
-                      to={`/fournisseurs/${fournisseur.num_f}/modifier`}
+                    <button
+                      onClick={() => handleModifyClick(fournisseur)}
                       className="btn btn-sm btn-secondary"
                       title="Modifier"
                     >
                       ✏️
-                    </Link>
+                    </button>
                     <button
-                      onClick={() => setDeleteConfirm(fournisseur.num_f!)}
+                      onClick={() => handleDeleteClick(fournisseur)}
                       className="btn btn-sm btn-danger"
                       title="Supprimer"
                     >
@@ -139,31 +191,21 @@ const FournisseurList: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal de confirmation de suppression */}
-      {deleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Confirmer la suppression</h3>
-            <p>
-              Êtes-vous sûr de vouloir supprimer le fournisseur "{fournisseurs.find(f => f.num_f === deleteConfirm)?.nom_f}" ?
-            </p>
-            <div className="modal-actions">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="btn btn-secondary"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                className="btn btn-danger"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de confirmation avec mot de passe */}
+      <PasswordConfirmModal
+        isOpen={showPasswordModal}
+        onClose={handlePasswordCancel}
+        onConfirm={handlePasswordConfirm}
+        title={modalAction === 'delete' ? 'Confirmer la suppression' : 'Confirmer la modification'}
+        message={
+          selectedFournisseur
+            ? modalAction === 'delete'
+              ? `Êtes-vous sûr de vouloir supprimer le fournisseur "${selectedFournisseur.nom_f}" ?`
+              : `Êtes-vous sûr de vouloir modifier le fournisseur "${selectedFournisseur.nom_f}" ?`
+            : ''
+        }
+        actionType={modalAction}
+      />
     </div>
   );
 };

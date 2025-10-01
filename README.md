@@ -579,4 +579,9 @@ Pour contribuer au projet :
 
 ---
 
+docker-compose down
+docker-compose up -d --build
+
+---
+
 *Développé avec ❤️ par SAIKOUZ TECH*

@@ -11,6 +11,7 @@ class ProduitProcessor implements ProcessorInterface
 
     public function process($data, $operation, array $uriVariables = [], array $context = []) {
         $name = $operation->getName() ?? '';
+        
         switch ($name) {
             case 'api_delete_produit':
                 return $this->supprimeProduit($data, $uriVariables, $context);
@@ -81,21 +82,51 @@ class ProduitProcessor implements ProcessorInterface
                 throw new \RuntimeException('Fournisseur avec num_f ' . $data->getFournisseurId() . ' non trouvé.');
             }
         }
-        
-        // Calcul automatique du total
-        if ($data->getQteP() && $data->getPrix()) {
-            $data->setTotal($data->getQteP() * $data->getPrix());
+
+        // Vérifier si un produit avec le même nom existe déjà (peu importe le fournisseur)
+        $produitExistant = $this->em->getRepository(Produit::class)->findOneBy([
+            'nom_p' => $data->getNomP()
+        ]);
+
+        if ($produitExistant) {
+            // Produit existant : mettre à jour la quantité et le total
+            $nouvelleQuantite = $produitExistant->getQteP() + $data->getQteP();
+            $produitExistant->setQteP($nouvelleQuantite);
+            
+            // Mettre à jour le prix si un nouveau prix est fourni
+            if ($data->getPrix() && $data->getPrix() > 0) {
+                $produitExistant->setPrix($data->getPrix());
+            }
+            
+            // Recalculer le total
+            $produitExistant->setTotal($produitExistant->getQteP() * $produitExistant->getPrix());
+            
+            try {
+                $this->em->flush();
+            } catch (\Exception $e) {
+                throw new \RuntimeException('Erreur lors de la mise à jour du produit existant : ' . $e->getMessage());
+            }
+            
+            return $produitExistant;
+        } else {
+            // Nouveau produit : créer une nouvelle entrée
+            // Calcul automatique du total
+            if ($data->getQteP() && $data->getPrix()) {
+                $data->setTotal($data->getQteP() * $data->getPrix());
+            }
+            
+            try {
+                $this->em->persist($data);
+                $this->em->flush();
+            } catch (\Exception $e) {
+                throw new \RuntimeException('Produit non ajouté : ' . $e->getMessage());
+            }
+            
+            if (null === $data->getId()) {
+                throw new \RuntimeException('Produit non ajouté : identifiant non généré.');
+            }
+            
+            return $data;
         }
-        
-        try {
-            $this->em->persist($data);
-            $this->em->flush();
-        } catch (\Exception $e) {
-            throw new \RuntimeException('Produit non ajouté : ' . $e->getMessage());
-        }
-        if (null === $data->getId()) {
-            throw new \RuntimeException('Produit non ajouté : identifiant non généré.');
-        }
-        return $data;
     }
 }

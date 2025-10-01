@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import clientService from '../../services/clientService';
 import type { Client } from '../../services/clientService';
+import PasswordConfirmModal from '../common/PasswordConfirmModal';
+import { printList } from '../../utils/printUtils';
+import '../../styles/print-buttons.css';
 import './ClientList.css';
 
 const ClientList: React.FC = () => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [modalAction, setModalAction] = useState<'delete' | 'modify'>('delete');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Charger les clients au montage du composant
   useEffect(() => {
@@ -33,7 +39,6 @@ const ClientList: React.FC = () => {
     try {
       await clientService.deleteClient(id);
       setClients(clients.filter(c => c.num_c !== id));
-      setDeleteConfirm(null);
       setError('');
     } catch (error) {
       setError('Erreur lors de la suppression du client');
@@ -41,9 +46,52 @@ const ClientList: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (client: Client) => {
+    setSelectedClient(client);
+    setModalAction('delete');
+    setShowPasswordModal(true);
+  };
+
+  const handleModifyClick = (client: Client) => {
+    setSelectedClient(client);
+    setModalAction('modify');
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordConfirm = () => {
+    if (selectedClient) {
+      if (modalAction === 'delete') {
+        handleDelete(selectedClient.num_c!);
+      } else if (modalAction === 'modify') {
+        navigate(`/clients/${selectedClient.num_c}/modifier`);
+      }
+    }
+    setShowPasswordModal(false);
+    setSelectedClient(null);
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false);
+    setSelectedClient(null);
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Intl.DateTimeFormat('fr-FR').format(new Date(dateString));
+  };
+
+  const handlePrintList = () => {
+    const columns = [
+      { key: 'num_c', label: 'ID' },
+      { key: 'nom_c', label: 'Nom' },
+      { key: 'prenom_c', label: 'Prénom' },
+      { key: 'tel_c', label: 'Téléphone' },
+      { key: 'mail_c', label: 'Email' },
+      { key: 'adresse_c', label: 'Adresse' },
+      { key: 'datecreation_c', label: 'Date création', format: (date: string) => formatDate(date) }
+    ];
+    
+    printList('Liste des Clients', clients, columns);
   };
 
   if (loading) {
@@ -63,10 +111,15 @@ const ClientList: React.FC = () => {
           </Link>
           <h1>Gestion des Clients</h1>
         </div>
-        <Link to="/clients/nouveau" className="btn btn-primary">
-          <span className="icon">+</span>
-          Nouveau Client
-        </Link>
+        <div className="header-actions">
+          <button onClick={handlePrintList} className="btn btn-print">
+            🖨️ Imprimer la liste
+          </button>
+          <Link to="/clients/nouveau" className="btn btn-primary">
+            <span className="icon">+</span>
+            Nouveau Client
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -119,15 +172,15 @@ const ClientList: React.FC = () => {
                   <td className="address">{client.adresse_c}</td>
                   <td className="date">{formatDate(client.datecreation_c)}</td>
                   <td className="actions">
-                    <Link 
-                      to={`/clients/${client.num_c}/modifier`}
+                    <button
+                      onClick={() => handleModifyClick(client)}
                       className="btn btn-sm btn-secondary"
                       title="Modifier"
                     >
                       ✏️
-                    </Link>
+                    </button>
                     <button
-                      onClick={() => setDeleteConfirm(client.num_c!)}
+                      onClick={() => handleDeleteClick(client)}
                       className="btn btn-sm btn-danger"
                       title="Supprimer"
                     >
@@ -141,31 +194,21 @@ const ClientList: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal de confirmation de suppression */}
-      {deleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Confirmer la suppression</h3>
-            <p>
-              Êtes-vous sûr de vouloir supprimer le client "{clients.find(c => c.num_c === deleteConfirm)?.nom_c} {clients.find(c => c.num_c === deleteConfirm)?.prenom_c}" ?
-            </p>
-            <div className="modal-actions">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="btn btn-secondary"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                className="btn btn-danger"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de confirmation avec mot de passe */}
+      <PasswordConfirmModal
+        isOpen={showPasswordModal}
+        onClose={handlePasswordCancel}
+        onConfirm={handlePasswordConfirm}
+        title={modalAction === 'delete' ? 'Confirmer la suppression' : 'Confirmer la modification'}
+        message={
+          selectedClient
+            ? modalAction === 'delete'
+              ? `Êtes-vous sûr de vouloir supprimer le client "${selectedClient.nom_c} ${selectedClient.prenom_c}" ?`
+              : `Êtes-vous sûr de vouloir modifier le client "${selectedClient.nom_c} ${selectedClient.prenom_c}" ?`
+            : ''
+        }
+        actionType={modalAction}
+      />
     </div>
   );
 };

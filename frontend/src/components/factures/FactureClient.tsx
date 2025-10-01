@@ -107,11 +107,11 @@ const FactureClient: React.FC = () => {
     return produits.find(produit => produit.id === produitId);
   };
 
-  const formatPrice = (price: number) => {
+    const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
-    }).format(price);
+    }).format(price); // Affichage direct sans conversion
   };
 
   const calculateCommandeTotal = (commande: Commande) => {

@@ -1,10 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { fournisseurService } from '../../services/fournisseurService';
+import clientService from '../../services/clientService';
+import produitService from '../../services/produitService';
+import commandeService from '../../services/commandeService';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const [stats, setStats] = useState({
+    fournisseurs: 0,
+    clients: 0,
+    produits: 0,
+    commandes: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const [
+        fournisseursData,
+        clientsData,
+        produitsData,
+        commandesData
+      ] = await Promise.all([
+        fournisseurService.getAll(),
+        clientService.getAllClients(),
+        produitService.getAllProduits(),
+        commandeService.getAllCommandes()
+      ]);
+
+      setStats({
+        fournisseurs: fournisseursData.length,
+        clients: clientsData.length,
+        produits: produitsData.length,
+        commandes: commandesData.length
+      });
+    } catch (error) {
+      console.error('Erreur lors du chargement des statistiques:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -25,7 +68,7 @@ const Dashboard: React.FC = () => {
 
       <main className="dashboard-content">
         <div className="welcome-card">
-          <h2>Tableau de bord - StockManager</h2>
+          <h2>Tableau de bord</h2>
           <p>Bienvenue dans votre espace de gestion, {user?.nom_user} !</p>
           <div className="user-details">
             <p><strong>ID:</strong> {user?.id}</p>
@@ -36,20 +79,20 @@ const Dashboard: React.FC = () => {
 
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-number">8</div>
+            <div className="stat-number">{loading ? '...' : stats.fournisseurs}</div>
             <div className="stat-label">Fournisseurs</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">145</div>
+            <div className="stat-number">{loading ? '...' : stats.clients}</div>
+            <div className="stat-label">Clients</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-number">{loading ? '...' : stats.produits}</div>
             <div className="stat-label">Produits</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">32</div>
+            <div className="stat-number">{loading ? '...' : stats.commandes}</div>
             <div className="stat-label">Commandes</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">67</div>
-            <div className="stat-label">Clients</div>
           </div>
         </div>
 
@@ -82,7 +125,7 @@ const Dashboard: React.FC = () => {
           {user?.role === 'admin' && (
             <div className="feature-card admin-only">
               <div className="feature-icon">⚙️</div>
-              <h3>Administration</h3>
+              <h3>Admin</h3>
               <p>Gérez les utilisateurs, les permissions et les paramètres système</p>
             </div>
           )}

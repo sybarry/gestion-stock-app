@@ -16,12 +16,13 @@ use App\State\Processor\ProduitProcessor;
 use App\State\Provider\ProduitProvider;
 
 #[ApiResource(
+    processor: ProduitProcessor::class,
     operations: [
         new Get(),
         new GetCollection(),
         new Post(),
         new Patch(),
-    new Delete(processor: ProduitProcessor::class),
+        new Delete(),
     ],
     normalizationContext: ['groups' => ['produit:read']],
     denormalizationContext: ['groups' => ['produit:write']]

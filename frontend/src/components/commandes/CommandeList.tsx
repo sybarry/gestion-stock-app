@@ -1,20 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import commandeService from '../../services/commandeService';
 import clientService from '../../services/clientService';
 import produitService from '../../services/produitService';
 import type { Commande } from '../../services/commandeService';
 import type { Client } from '../../services/clientService';
 import type { Produit } from '../../services/produitService';
+import PasswordConfirmModal from '../common/PasswordConfirmModal';
+import { printList } from '../../utils/printUtils';
+import '../../styles/print-buttons.css';
 import './CommandeList.css';
 
 const CommandeList: React.FC = () => {
+  const navigate = useNavigate();
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [modalData, setModalData] = useState<{
+    isOpen: boolean;
+    action: 'delete' | 'modify';
+    commandeId: number | null;
+    commandeNum: string;
+  }>({
+    isOpen: false,
+    action: 'delete',
+    commandeId: null,
+    commandeNum: ''
+  });
 
   // Charger les données au montage du composant
   useEffect(() => {
@@ -41,16 +55,45 @@ const CommandeList: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteClick = (commande: Commande) => {
+    setModalData({
+      isOpen: true,
+      action: 'delete',
+      commandeId: commande.id ?? null,
+      commandeNum: commande.num_com
+    });
+  };
+
+  const handleModifyClick = (commande: Commande) => {
+    setModalData({
+      isOpen: true,
+      action: 'modify',
+      commandeId: commande.id ?? null,
+      commandeNum: commande.num_com
+    });
+  };
+
+  const handleModalConfirm = async () => {
+    if (modalData.commandeId === null) return;
+
     try {
-      await commandeService.deleteCommande(id);
-      setCommandes(commandes.filter(c => c.id !== id));
-      setDeleteConfirm(null);
-      setError('');
+      if (modalData.action === 'delete') {
+        await commandeService.deleteCommande(modalData.commandeId);
+        setCommandes(commandes.filter(c => c.id !== modalData.commandeId));
+        setError('');
+      } else if (modalData.action === 'modify') {
+        // Rediriger vers la page de modification
+        navigate(`/commandes/${modalData.commandeId}/modifier`);
+      }
+      setModalData({ isOpen: false, action: 'delete', commandeId: null, commandeNum: '' });
     } catch (error) {
-      setError('Erreur lors de la suppression de la commande');
+      setError(`Erreur lors de l'opération sur la commande`);
       console.error(error);
     }
+  };
+
+  const handleModalClose = () => {
+    setModalData({ isOpen: false, action: 'delete', commandeId: null, commandeNum: '' });
   };
 
   const getClientInfo = (clientUrl: string) => {
@@ -67,26 +110,62 @@ const CommandeList: React.FC = () => {
     return produit ? produit.nom_p : `Produit #${produitId}`;
   };
 
+  const getProduitPrice = (produitUrl: string) => {
+    const produitId = parseInt(produitUrl.split('/').pop() || '0');
+    const produit = produits.find(p => p.id === produitId);
+    return produit ? produit.prix : 0;
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
-    }).format(price / 100); // Les prix sont en centimes
+    }).format(price); // Affichage direct sans conversion
   };
 
-  const formatDate = (dateString: string) => {
+    const formatDate = (dateString: string) => {
     if (!dateString) return 'Date non définie';
     
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
+    try {
+      return new Intl.DateTimeFormat('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(new Date(dateString));
+    } catch (error) {
       return 'Date invalide';
     }
-    
-    return date.toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+  };
+
+  const handlePrintList = () => {
+    const commandesForPrint = commandes.map(commande => {
+      const clientInfo = getClientInfo(commande.client);
+      const produitInfo = getProduitInfo(commande.produit);
+      const prixUnitaire = getProduitPrice(commande.produit);
+      const total = prixUnitaire * commande.qte_c;
+      
+      return {
+        ...commande,
+        clientNom: clientInfo,
+        produitNom: produitInfo,
+        prixUnitaire,
+        total
+      };
     });
+    
+    const columns = [
+      { key: 'id', label: 'ID' },
+      { key: 'clientNom', label: 'Client' },
+      { key: 'produitNom', label: 'Produit' },
+      { key: 'qte_c', label: 'Quantité' },
+      { key: 'prixUnitaire', label: 'Prix unitaire', format: (price: number) => formatPrice(price) },
+      { key: 'total', label: 'Total', format: (total: number) => formatPrice(total) },
+      { key: 'date_commande', label: 'Date de création', format: (date: string) => formatDate(date) }
+    ];
+    
+    printList('Liste des Commandes', commandesForPrint, columns);
   };
 
   const calculateTotal = (commande: Commande) => {
@@ -115,10 +194,15 @@ const CommandeList: React.FC = () => {
           </Link>
           <h1>Gestion des Commandes</h1>
         </div>
-        <Link to="/commandes/nouveau" className="btn btn-primary">
-          <span className="icon">+</span>
-          Nouvelle Commande
-        </Link>
+        <div className="header-actions">
+          <button onClick={handlePrintList} className="btn btn-print">
+            🖨️ Imprimer la liste
+          </button>
+          <Link to="/commandes/nouvelle" className="btn btn-primary">
+            <span className="icon">+</span>
+            Nouvelle Commande
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -181,15 +265,15 @@ const CommandeList: React.FC = () => {
                     <td className="total">{formatPrice(total)}</td>
                     <td className="date">{formatDate(commande.date_commande)}</td>
                     <td className="actions">
-                      <Link 
-                        to={`/commandes/${commande.id}/modifier`}
+                      <button
+                        onClick={() => handleModifyClick(commande)}
                         className="btn btn-sm btn-secondary"
                         title="Modifier"
                       >
                         ✏️
-                      </Link>
+                      </button>
                       <button
-                        onClick={() => setDeleteConfirm(commande.id!)}
+                        onClick={() => handleDeleteClick(commande)}
                         className="btn btn-sm btn-danger"
                         title="Supprimer"
                       >
@@ -204,31 +288,15 @@ const CommandeList: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal de confirmation de suppression */}
-      {deleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Confirmer la suppression</h3>
-            <p>
-              Êtes-vous sûr de vouloir supprimer la commande "{commandes.find(c => c.id === deleteConfirm)?.num_com}" ?
-            </p>
-            <div className="modal-actions">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="btn btn-secondary"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                className="btn btn-danger"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de confirmation avec mot de passe */}
+      <PasswordConfirmModal
+        isOpen={modalData.isOpen}
+        onConfirm={handleModalConfirm}
+        onClose={handleModalClose}
+        title={modalData.action === 'delete' ? 'Supprimer la commande' : 'Modifier la commande'}
+        message={`Voulez-vous vraiment ${modalData.action === 'delete' ? 'supprimer' : 'modifier'} la commande "${modalData.commandeNum}" ?`}
+        actionType={modalData.action}
+      />
     </div>
   );
 };
