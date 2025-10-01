@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginForm from './components/auth/LoginForm';
 import Dashboard from './components/dashboard/Dashboard';
+import ClientDashboard from './components/dashboard/ClientDashboard';
 import ProduitList from './components/produits/ProduitList';
 import ProduitForm from './components/produits/ProduitForm';
 import CommandeList from './components/commandes/CommandeList';
@@ -16,6 +17,17 @@ import AdminForm from './components/admins/AdminForm';
 import FactureClient from './components/factures/FactureClient';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './App.css';
+
+// Composant pour la redirection automatique basée sur le rôle
+const DashboardRedirect: React.FC = () => {
+  const { user } = useAuth();
+  
+  if (user?.role === 'client') {
+    return <ClientDashboard />;
+  }
+  
+  return <Dashboard />;
+};
 
 // Composant pour gérer la redirection automatique
 const AppRouter: React.FC = () => {
@@ -39,7 +51,7 @@ const AppRouter: React.FC = () => {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <DashboardRedirect />
           </ProtectedRoute>
         }
       />
@@ -54,7 +66,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/produits/nouveau"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <ProduitForm />
           </ProtectedRoute>
         }
@@ -62,7 +74,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/produits/:id/modifier"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <ProduitForm />
           </ProtectedRoute>
         }
@@ -76,7 +88,7 @@ const AppRouter: React.FC = () => {
         }
       />
       <Route
-        path="/commandes/nouveau"
+        path="/commandes/nouvelle"
         element={
           <ProtectedRoute>
             <CommandeForm />
@@ -94,7 +106,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/clients"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <ClientList />
           </ProtectedRoute>
         }
@@ -102,7 +114,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/clients/nouveau"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <ClientForm />
           </ProtectedRoute>
         }
@@ -110,7 +122,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/clients/:id/modifier"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <ClientForm />
           </ProtectedRoute>
         }
@@ -118,7 +130,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/fournisseurs"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <FournisseurList />
           </ProtectedRoute>
         }
@@ -126,7 +138,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/fournisseurs/nouveau"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <FournisseurForm />
           </ProtectedRoute>
         }
@@ -134,7 +146,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/fournisseurs/:id/modifier"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <FournisseurForm />
           </ProtectedRoute>
         }
@@ -166,7 +178,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/factures"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="admin">
             <FactureClient />
           </ProtectedRoute>
         }
